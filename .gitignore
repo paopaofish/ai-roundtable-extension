@@ -1,0 +1,17 @@
+# 依赖
+node_modules/
+
+# 系统文件
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# 日志与本地数据（可能包含你的对话内容，不要提交）
+*.log
+*.jsonl
+data/
+screenshots/
+
+# 编辑器
+.vscode/
+.idea/
