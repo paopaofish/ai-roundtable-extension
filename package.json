@@ -1,0 +1,12 @@
+{
+  "name": "ai-roundtable-extension",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Dev tooling for the AI 圆桌 browser extension (no runtime dependencies).",
+  "scripts": {
+    "test": "node --test test/",
+    "check": "node tools/check.mjs",
+    "icons": "node tools/make-icons.mjs"
+  }
+}
