@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <title>预览</title>
+    <link rel="stylesheet" href="../src/dashboard.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="brand">
+        <span class="logo">🗣️</span>
+        <div>
+          <h1>AI 圆桌</h1>
+          <p class="sub">豆包 · 千问 · 智谱清言 轮流发言，DeepSeek 收底总结</p>
+        </div>
+      </div>
+      <div class="topbar-right">
+        <span class="pill pill-ok">就绪</span>
+        <button class="btn btn-ghost">导出 Markdown</button>
+      </div>
+    </header>
+
+    <main class="layout">
+      <section class="main-col">
+        <section class="card hidden"></section>
+
+        <section class="card">
+          <div class="run-head">
+            <div class="run-meta">
+              <div class="pill pill-run">讨论中</div>
+              <div class="run-title">小团队是否应该强制要求所有代码提交必须经过 AI 评审才能合并？</div>
+            </div>
+            <div class="run-stats">
+              <div class="stat"><span class="stat-k">轮次</span><span class="stat-v">2 / 3</span></div>
+              <div class="stat"><span class="stat-k">当前发言</span><span class="stat-v">智谱清言</span></div>
+              <div class="stat"><span class="stat-k">已用时</span><span class="stat-v">4分12秒</span></div>
+            </div>
+            <div class="run-actions">
+              <button class="btn btn-ghost btn-sm">暂停</button>
+              <button class="btn btn-danger btn-sm">停止</button>
+            </div>
+          </div>
+
+          <div class="progressbar"><div style="width: 55%"></div></div>
+
+          <div class="timeline">
+            <div class="turn doubao">
+              <div class="turn-head">
+                <span class="turn-who">豆包</span>
+                <span class="turn-round">第 1 轮</span>
+                <span class="turn-time">耗时 38秒</span>
+              </div>
+              <div class="turn-body">我的立场：不该"强制"，但应该"默认"。强制 AI 评审会把一道概率性建议变成硬性闸门，误报会迅速消耗团队信任；默认开启则保留了工程师的最终判断权。三条理由：一、AI 评审对业务上下文的理解仍然是短板；二、强制会催生"走流程"心态；三、小团队真正稀缺的是决策速度。</div>
+            </div>
+
+            <div class="turn qwen">
+              <div class="turn-head">
+                <span class="turn-who">通义千问</span>
+                <span class="turn-round">第 1 轮</span>
+                <span class="turn-time">耗时 51秒</span>
+              </div>
+              <div class="turn-body">我最不认同豆包把"强制"与"信任"直接对立。强制恰恰可以是建立信任的手段：当 AI 评审的漏报率被数据证明足够低时，硬性门槛反而降低了人评审的负担。真正的问题不是该不该强制，而是强制之前是否建立了可量化的误报/漏报基线。</div>
+            </div>
+
+            <div class="turn zhipu">
+              <div class="turn-head">
+                <span class="turn-who">智谱清言</span>
+                <span class="turn-round">第 1 轮</span>
+                <span class="turn-time">进行中</span>
+              </div>
+              <div class="turn-body streaming">正在生成… 已收到 186 字</div>
+            </div>
+
+            <div class="turn doubao">
+              <div class="turn-head">
+                <span class="turn-who">豆包</span>
+                <span class="turn-round">第 2 轮</span>
+                <span class="turn-time"></span>
+              </div>
+              <div class="turn-body pending">等待发言…</div>
+            </div>
+          </div>
+        </section>
+
+        <section class="card">
+          <div class="card-head">
+            <h2>会议纪要</h2>
+            <span class="pill pill-ok">已生成</span>
+          </div>
+          <pre class="markdown"># 小团队是否应该强制要求所有代码提交必须经过 AI 评审才能合并？
+
+&gt; 一句话结论：应当"默认开启 + 允许显式豁免"，而不是无条件强制。
+
+## 一、各方核心观点
+- 豆包：反对强制，主张默认开启，保留工程师最终判断权。
+- 通义千问：强制可以是建立信任的手段，前提是先量化误报率。
+- 智谱清言：关键在豁免机制与责任归属，而非强制与否本身。
+
+## 二、共识与分歧
+### 共识
+三方都认可 AI 评审应作为流程的一部分，而非替代人工评审。
+### 分歧
+是否设置硬性闸门，以及闸门触发后由谁承担责任。</pre>
+        </section>
+      </section>
+
+      <aside class="side-col card">
+        <div class="card-head">
+          <h2>运行日志</h2>
+          <span class="muted">42</span>
+        </div>
+        <div class="logs">
+          <div class="log-line"><span class="log-ts">10:21:03</span><span class="log-lv-info">info </span><span>四个标签页已归入同一个分组</span></div>
+          <div class="log-line"><span class="log-ts">10:21:05</span><span class="log-lv-info">info </span><span>第 1 轮 · 豆包 开始发言</span></div>
+          <div class="log-line"><span class="log-ts">10:21:43</span><span class="log-lv-info">info </span><span>第 1 轮 · 豆包 完成（186 字，38 秒）</span></div>
+          <div class="log-line"><span class="log-ts">10:21:44</span><span class="log-lv-info">info </span><span>第 1 轮 · 通义千问 开始发言</span></div>
+          <div class="log-line"><span class="log-ts">10:22:35</span><span class="log-lv-info">info </span><span>第 1 轮 · 通义千问 完成（172 字，51 秒）</span></div>
+          <div class="log-line"><span class="log-ts">10:22:36</span><span class="log-lv-info">info </span><span>第 1 轮 · 智谱清言 开始发言</span></div>
+          <div class="log-line"><span class="log-ts">10:23:10</span><span class="log-lv-warn">warn </span><span>智谱清言 第 1 次失败：发送后 150 秒内没有出现新回复，重试</span></div>
+          <div class="log-line"><span class="log-ts">10:24:02</span><span class="log-lv-info">info </span><span>检测到双回复对比界面，已自动选择第一个</span></div>
+        </div>
+      </aside>
+    </main>
+  </body>
+</html>
