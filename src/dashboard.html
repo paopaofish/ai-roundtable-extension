@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <title>AI 圆桌 · 控制台</title>
+    <link rel="stylesheet" href="dashboard.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="brand">
+        <span class="logo">🗣️</span>
+        <div>
+          <h1>AI 圆桌</h1>
+          <p class="sub">豆包 · 千问 · 智谱清言 轮流发言，DeepSeek 收底总结</p>
+        </div>
+      </div>
+      <div class="topbar-right">
+        <span id="conn" class="pill pill-idle">就绪</span>
+        <button id="exportBtn" class="btn btn-ghost" disabled>导出 Markdown</button>
+      </div>
+    </header>
+
+    <main class="layout">
+      <section class="main-col">
+        <section id="setup" class="card">
+          <div class="card-head">
+            <h2>发起讨论</h2>
+            <button id="preflightBtn" class="btn btn-ghost btn-sm">检查四家状态</button>
+          </div>
+
+          <div id="siteStatus" class="site-status"></div>
+
+          <label class="field">
+            <span class="field-label">议题</span>
+            <textarea id="topic" rows="4" placeholder="例如：一个 3 人小团队，明年该不该全面转向 AI 辅助开发？请给出可执行的判断标准。"></textarea>
+          </label>
+
+          <div class="row">
+            <div class="field field-inline">
+              <span class="field-label">轮数（1–20）</span>
+              <div class="rounds-wrap">
+                <input id="rounds" type="number" min="1" max="20" value="3" />
+                <span id="estimate" class="hint"></span>
+              </div>
+            </div>
+            <div class="field field-inline">
+              <span class="field-label">发言顺序</span>
+              <div class="badges" id="orderBadges">
+                <span class="badge badge-doubao">豆包</span>
+                <span class="arrow">→</span>
+                <span class="badge badge-qwen">千问</span>
+                <span class="arrow">→</span>
+                <span class="badge badge-zhipu">智谱清言</span>
+                <span class="arrow">→</span>
+                <span class="badge badge-deepseek">DeepSeek 总结</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="actions">
+            <button id="startBtn" class="btn btn-primary">开始讨论</button>
+            <span class="hint">
+              点开始后会自动打开并归组四个标签页；讨论期间请把浏览器窗口留在前台，不要操作这些标签页。
+            </span>
+          </div>
+        </section>
+
+        <section id="runPanel" class="card hidden">
+          <div class="run-head">
+            <div class="run-meta">
+              <div id="phasePill" class="pill pill-run">准备中</div>
+              <div class="run-title" id="runTitle">—</div>
+            </div>
+            <div class="run-stats">
+              <div class="stat"><span class="stat-k">轮次</span><span class="stat-v" id="statRound">0 / 0</span></div>
+              <div class="stat"><span class="stat-k">当前发言</span><span class="stat-v" id="statSpeaker">—</span></div>
+              <div class="stat"><span class="stat-k">已用时</span><span class="stat-v" id="statElapsed">0秒</span></div>
+            </div>
+            <div class="run-actions">
+              <button id="pauseBtn" class="btn btn-ghost btn-sm">暂停</button>
+              <button id="stopBtn" class="btn btn-danger btn-sm">停止</button>
+            </div>
+          </div>
+
+          <div class="progressbar"><div id="progressFill"></div></div>
+          <div id="timeline" class="timeline"></div>
+        </section>
+
+        <section id="summaryCard" class="card hidden">
+          <div class="card-head">
+            <h2>会议纪要</h2>
+            <span id="summaryBadge" class="pill pill-ok">已生成</span>
+          </div>
+          <pre id="summaryBody" class="markdown"></pre>
+        </section>
+      </section>
+
+      <aside class="side-col card">
+        <div class="card-head">
+          <h2>运行日志</h2>
+          <span class="muted" id="logCount">0</span>
+        </div>
+        <div id="logs" class="logs"></div>
+      </aside>
+    </main>
+
+    <script type="module" src="dashboard.js"></script>
+  </body>
+</html>
