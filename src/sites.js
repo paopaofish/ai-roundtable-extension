@@ -11,9 +11,10 @@
       host: 'www.doubao.com',
       url: 'https://www.doubao.com/chat/',
       color: 'blue',
-      // Doubao mounts a transient IME proxy textarea beside its ProseMirror
-      // editor. ProseMirror is the stable, state-bearing node.
-      editors: ['.tiptap.ProseMirror', 'textarea[data-testid="chat_input_input"]'],
+      // Doubao keeps a hidden ProseMirror display layer under a real <textarea>
+      // (its IME shell). Try the interactive textarea first; agent.js verifies
+      // which layer the site actually registers.
+      editors: ['textarea[data-testid="chat_input_input"]', 'textarea.textarea-YelHeN', '.tiptap.ProseMirror'],
       send: { kind: 'click', selector: '[data-testid="chat_input_send_button"]' },
       sendCheckSel: '[data-testid="chat_input_send_button"]',
       replySel: '[data-testid="receive_message"]',

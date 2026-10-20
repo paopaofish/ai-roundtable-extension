@@ -9,14 +9,38 @@
 import { readFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { evaluate } from './wb.mjs';
+import { evaluate, wb, sleep } from './wb.mjs';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const session = process.argv[2] || 'zhipu';
 const prompt = process.argv[3] || '用一句话回答：2 加 3 等于几？';
 const askTimeoutSec = Number(process.argv[4] || 180);
 
+// Mirror the extension's focusTab(): an activated tab is not timer-throttled
+// and accepts synthetic input far more reliably than a background one.
+const sitesText = readFileSync(join(ROOT, 'src/sites.js'), 'utf8');
+const urlMatch = sitesText.match(new RegExp(`${session}[^]*?url: '([^']+)'`));
+const siteUrl = urlMatch ? urlMatch[1] : null;
+try {
+  const here = await evaluate('(() => JSON.stringify({ url: location.href }))()', session, { timeoutMs: 15000 });
+  const current = here && here.url && !here.url.startsWith('chrome-extension://') ? here.url : siteUrl;
+  if (current) {
+    await wb('navigate', { url: current, newTab: true }, session, { timeoutMs: 60000 });
+    await sleep(2500);
+    console.log(`[${session}] 已激活标签页 ${current.slice(0, 60)}`);
+  }
+} catch (err) {
+  if (siteUrl) {
+    await wb('navigate', { url: siteUrl, newTab: true }, session, { timeoutMs: 60000 }).catch(() => {});
+    await sleep(2500);
+    console.log(`[${session}] 标签页缺失，已重建 ${siteUrl.slice(0, 60)}`);
+  } else {
+    console.log(`[${session}] 激活标签页失败（继续测试）: ${err.message.slice(0, 60)}`);
+  }
+}
+
 const sitesSrc = readFileSync(join(ROOT, 'src/sites.js'), 'utf8');
+const waiterSrc = readFileSync(join(ROOT, 'src/waiter.js'), 'utf8');
 const agentSrc = readFileSync(join(ROOT, 'src/agent.js'), 'utf8');
 
 const inject = `(() => {
@@ -27,6 +51,9 @@ const inject = `(() => {
   try {
     ${sitesSrc}
   } catch (e) { return JSON.stringify({ ok: false, step: 'sites', error: e.message }); }
+  try {
+    ${waiterSrc}
+  } catch (e) { return JSON.stringify({ ok: false, step: 'waiter', error: e.message }); }
   try {
     ${agentSrc}
   } catch (e) { return JSON.stringify({ ok: false, step: 'agent', error: e.message }); }

@@ -42,12 +42,35 @@
     return r.width > 0 && r.height > 0;
   };
 
-  function findEditor() {
+  // An editor must be *usable*, not merely laid out: Doubao keeps a hidden
+  // ProseMirror display layer next to the real <textarea>, and a zero-rect or
+  // pointer-events:none node silently swallows every injected keystroke.
+  const editable = (el) => {
+    if (!el) return false;
+    const r = el.getBoundingClientRect();
+    if (r.width <= 0 || r.height <= 0) return false;
+    const cs = getComputedStyle(el);
+    return cs.visibility !== 'hidden' && cs.display !== 'none' && cs.pointerEvents !== 'none';
+  };
+
+  function findEditors() {
+    const found = [];
     for (const sel of SITE.editors || []) {
-      const el = [...document.querySelectorAll(sel)].find(visible);
-      if (el) return { el, sel };
+      for (const el of document.querySelectorAll(sel)) {
+        if (editable(el)) found.push({ el, sel });
+      }
     }
-    return null;
+    if (!found.length) {
+      for (const sel of SITE.editors || []) {
+        const el = [...document.querySelectorAll(sel)].find(visible);
+        if (el) found.push({ el, sel });
+      }
+    }
+    return found;
+  }
+
+  function findEditor() {
+    return findEditors()[0] || null;
   }
 
   async function waitForEditor(timeoutMs = 25000) {
@@ -197,11 +220,35 @@
     return true;
   }
 
-  function clickSendButton(spec) {
-    const nodes = [...document.querySelectorAll(spec.selector)].filter(visible);
-    if (!nodes.length) return false;
-    clickElement(spec.last ? nodes[nodes.length - 1] : nodes[0]);
-    return true;
+  // The send control is often rendered a beat after the text lands (React state
+  // sync), so a one-shot lookup is racy. Prefer visible nodes but tolerate a
+  // zero-rect control mid-transition, and fall back to semantic hints.
+  function findSendControl(spec) {
+    const selectors = [spec && spec.selector, SITE.sendCheckSel].filter(Boolean);
+    for (const sel of selectors) {
+      const all = [...document.querySelectorAll(sel)];
+      if (!all.length) continue;
+      const shown = all.filter(visible);
+      const pool = shown.length ? shown : all;
+      return spec && spec.last ? pool[pool.length - 1] : pool[0];
+    }
+    const labelled = [...document.querySelectorAll('button, [role="button"], [aria-label]')]
+      .filter(visible)
+      .filter((el) =>
+        /^(发送|发送消息|Send|Submit)$/i.test((el.getAttribute('aria-label') || el.innerText || '').trim()),
+      );
+    return labelled.length ? labelled[labelled.length - 1] : null;
+  }
+
+  async function waitForSendControl(spec, timeoutMs) {
+    const deadline = Date.now() + timeoutMs;
+    let hit = null;
+    while (Date.now() < deadline) {
+      hit = findSendControl(spec);
+      if (hit) return hit;
+      await sleep(300);
+    }
+    return null;
   }
 
   async function waitForCleared(el, timeoutMs) {
@@ -215,7 +262,9 @@
   }
 
   async function submit(el, prompt) {
-    // Make sure the composer is genuinely focused/initialised first.
+    // The composer may have been swapped by a re-render since we filled it.
+    const fresh = findEditor();
+    if (fresh) el = fresh.el;
     clickElement(el);
 
     if (SITE.sendCheckSel && sendDisabled() && prompt) {
@@ -225,22 +274,31 @@
     }
 
     const spec = SITE.send || {};
-    let handled = false;
-    if (spec.kind === 'text') handled = clickByText(spec.text);
-    else if (spec.kind === 'enter') {
+
+    if (spec.kind === 'enter') {
       pressEnter(el);
-      handled = true;
-    } else handled = clickSendButton(spec);
+      if (await waitForCleared(el, 6000)) return;
+      throw tagged('消息未能发送（回车后输入框未清空）', 'E_NOT_SENT');
+    }
 
-    if (!handled) throw tagged('找不到发送控件', 'E_SEND');
+    if (spec.kind === 'text') {
+      if (clickByText(spec.text) && (await waitForCleared(el, 5000))) return;
+    } else {
+      // Give the control a moment to render instead of failing on first lookup.
+      const target = await waitForSendControl(spec, 8000);
+      if (target) {
+        clickElement(target);
+        if (await waitForCleared(el, 5000)) return;
+        emit('AI_LOG', { level: 'warn', message: '点击发送后输入框未清空，回退到回车键' });
+      } else {
+        emit('AI_LOG', { level: 'warn', message: '发送控件未出现，改用回车键发送' });
+      }
+    }
 
-    if (await waitForCleared(el, 5000)) return;
-
-    emit('AI_LOG', { level: 'warn', message: '发送后输入框未清空，回退到回车键' });
-    if (spec.kind !== 'enter') pressEnter(el);
+    pressEnter(el);
     if (await waitForCleared(el, 6000)) return;
 
-    throw tagged('消息未能发送（输入框内容未清空）', 'E_NOT_SENT');
+    throw tagged('消息未能发送（发送控件与回车均未生效）', 'E_SEND');
   }
 
   // --------------------------------------------------------------- the waiter
@@ -303,16 +361,34 @@
     const timeoutMs = opts.timeoutMs || 300000;
     trace('ask-start', { len: prompt.length, timeoutMs });
     const hit = await waitForEditor();
-    const el = hit.el;
+    let el = hit.el;
 
     await waitUntilIdle(60000);
     await waitForComposerStable();
+    // The composer can be swapped during settling; never fill a detached node.
+    const settled = findEditor();
+    if (settled) el = settled.el;
     const before = readReplyNow();
     const baselineText = before.text;
     trace('baseline', { count: before.count, len: baselineText.length });
 
-    await fillAndVerify(el, prompt, prompt.length);
-    trace('filled');
+    // Multi-layer composers (Doubao) register text in only one of their
+    // editors — try every candidate until the site accepts it.
+    let filled = false;
+    let lastErr = null;
+    for (const cand of findEditors()) {
+      try {
+        await fillAndVerify(cand.el, prompt, prompt.length);
+        el = cand.el;
+        filled = true;
+        trace('filled', { sel: cand.sel });
+        break;
+      } catch (err) {
+        lastErr = err;
+        trace('fill-rejected', { sel: cand.sel, reason: err.message });
+      }
+    }
+    if (!filled) throw lastErr || tagged('输入内容未能完整写入', 'E_INPUT_REJECTED');
     await submit(el, prompt);
     trace('submitted');
     emit('AI_LOG', { level: 'info', message: `已发送（${prompt.length} 字），等待回复` });
